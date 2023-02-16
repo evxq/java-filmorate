@@ -26,15 +26,12 @@ public class FilmController {
 
     @PostMapping
     public Film addFilm(@RequestBody Film film) {
-        if (filmValidation(film) != null) {
-            throw filmValidation(film);
-        } else {
-            filmId++;
-            film.setId(filmId);
-            filmMap.put(filmId, film);
-            log.debug("Добавлен новый фильм {}", film.getName());
-            return film;
-        }
+        validateFilm(film);
+        filmId++;
+        film.setId(filmId);
+        filmMap.put(filmId, film);
+        log.debug("Добавлен новый фильм {}", film.getName());
+        return film;
     }
 
     @PutMapping
@@ -43,44 +40,41 @@ public class FilmController {
             String errorMessage = "Такой фильм отсутствует";
             log.debug(errorMessage);
             throw new ValidationException(errorMessage);
-        }
-        if (filmValidation(film) != null) {
-            throw filmValidation(film);
         } else {
+            validateFilm(film);
             filmMap.put(film.getId(), film);
             log.debug("Обновлены данные о фильме: {}", film.getName());
             return film;
         }
     }
 
-    private ValidationException filmValidation(Film film) {
+    private void validateFilm(Film film) {
         String errorMessage;
         if (film == null) {
             errorMessage = "Данные фильма не переданы";
             log.debug(errorMessage);
-            return new ValidationException(errorMessage);
+            throw new ValidationException(errorMessage);
         }
         if (film.getName() == null || film.getName().isBlank()) {
             errorMessage = "Не указано название фильма";
             log.debug(errorMessage);
-            return new ValidationException(errorMessage);
+            throw new ValidationException(errorMessage);
         }
         if (film.getDescription().getBytes().length > 200) {
             errorMessage = "Размер описания не должен превышать 200 символов";
             log.debug(errorMessage);
-            return new ValidationException(errorMessage);
+            throw new ValidationException(errorMessage);
         }
         if (film.getReleaseDate().isBefore(LocalDate.of(1895, Month.DECEMBER, 28))) {
             errorMessage = "Дата релиза указана некорректна";
             log.debug(errorMessage);
-            return new ValidationException(errorMessage);
+            throw new ValidationException(errorMessage);
         }
         if (film.getDuration() < 0) {
             errorMessage = "Продолжительность фильма указана некорректна";
             log.debug(errorMessage);
-            return new ValidationException(errorMessage);
+            throw new ValidationException(errorMessage);
         }
-        else return null;
     }
 
 }
