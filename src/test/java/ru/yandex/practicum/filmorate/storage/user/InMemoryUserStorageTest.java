@@ -1,23 +1,45 @@
-package ru.yandex.practicum.filmorate.controller;
+package ru.yandex.practicum.filmorate.storage.user;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
+import ru.yandex.practicum.filmorate.controller.UserController;
+import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.service.UserService;
 
 import java.time.LocalDate;
 import java.time.Month;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @SpringBootTest
-public class UserControllerTest {
+public class InMemoryUserStorageTest {
 
-    UserController userController = new UserController();
+    UserStorage userStorage = new InMemoryUserStorage();
+    UserService userService = new UserService(userStorage);
+    UserController userController = new UserController(userStorage, userService);
 
     @Test
-    void getAllUsers() {
+    void getUserById_returnUser() {
+        User user = userController.createUser(new User("user1@ya.ru", "user1", LocalDate.of(2000, Month.JANUARY, 1)));
+
+        Assertions.assertEquals(user, userStorage.getUserById(1));
+    }
+
+    @Test
+    void getUserById_wrongId() {
+        NotFoundException nonuser = assertThrows(
+                NotFoundException.class,
+                () -> userStorage.getUserById(1)
+        );
+        Assertions.assertEquals("Такой пользователь отсутствует", nonuser.getMessage());
+    }
+
+    @Test
+    void getAllUsers_returnAllUserListSize() {
         userController.createUser(new User("user1@ya.ru", "user1", LocalDate.of(2000, Month.JANUARY, 1)));
         userController.createUser(new User("user2@ya.ru", "user2", LocalDate.of(2000, Month.JANUARY, 2)));
 
@@ -94,12 +116,22 @@ public class UserControllerTest {
     }
 
     @Test
-    void updateUser_emptyUsermap() {
-        ValidationException nonuser0 = assertThrows(
-                ValidationException.class,
+    void updateUser_returnUpdatedUser() {
+        userController.createUser(new User("user1@ya.ru", "user1", LocalDate.of(2000, Month.JANUARY, 1)));
+        User updUser = new User("userupd@ya.ru", "userUPD", LocalDate.of(2000, Month.JANUARY, 1));
+        updUser.setId(1);
+        userController.updateUser(updUser);
+
+        assertEquals(userController.getUserById(1), updUser);
+    }
+
+    @Test
+    void updateUser_emptyUserMap() {
+        NotFoundException nonuser = assertThrows(
+                NotFoundException.class,
                 () -> userController.updateUser(new User("user@ya.ru", "user1", LocalDate.of(2000, Month.JANUARY, 1)))
         );
-        Assertions.assertEquals("Такой пользователь отсутствует", nonuser0.getMessage());
+        Assertions.assertEquals("Такой пользователь отсутствует", nonuser.getMessage());
     }
 
 }
