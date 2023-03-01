@@ -1,43 +1,71 @@
 package ru.yandex.practicum.filmorate.service;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
-import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class FilmService {
 
+    private int filmId;
     private final FilmStorage filmStorage;
-    private final UserStorage userStorage;
+    private final UserService userService;
 
-    @Autowired
-    public FilmService(FilmStorage filmStorage, UserStorage userStorage) {
-        this.filmStorage = filmStorage;
-        this.userStorage = userStorage;
+    public Film getFilmById(Integer id) {
+        Film film = filmStorage.getFilmById(id);
+        if (film == null) {
+            String errorMessage = "Такой фильм отсутствует";
+            log.debug(errorMessage);
+            throw new NotFoundException(errorMessage);
+        }
+        log.debug("Получен фильм id={}", id);
+        return film;
     }
 
+    public List<Film> getAllFilms() {
+        log.debug("Вызван список всех фильмов. Общее количестов фильмов: {}", filmStorage.getAllFilms().size());
+        return filmStorage.getAllFilms();
+    }
+
+    public Film addFilm(Film film) {
+        filmId++;
+        film.setId(filmId);
+        filmStorage.addFilm(film);
+        log.debug("Добавлен новый фильм {}, присвоен id={}", film.getName(), film.getId());
+        return film;
+    }
+
+    public Film updateFilm(Film film) {
+        Film updFilm = filmStorage.updateFilm(film);
+        if (updFilm == null) {
+            String errorMessage = "Такой фильм отсутствует";
+            log.debug(errorMessage);
+            throw new NotFoundException(errorMessage);
+        } else {
+            log.debug("Обновлены данные о фильме: {}, id={}", film.getName(), film.getId());
+            return updFilm;
+        }
+    }
+
+
     public void likeFilm(Integer filmId, Integer userId) {
-        validateFilmAndUserById(filmId, userId);
-        filmStorage.getFilmById(filmId).addLike(userId);
+        checkExistenceOfFilmAndUser(filmId, userId);
+        getFilmById(filmId).getLikes().add(userId);
         log.debug("Фильм id={} получил лайк от пользователя id={}", filmId, userId);
     }
 
     public void revokeLikeToFilm(Integer filmId, Integer userId) {
-        validateFilmAndUserById(filmId, userId);
-        if (!filmStorage.getFilmById(filmId).getLikes().contains(userId)) {
-            log.debug("Фильм id={} не получал лайк от пользователя id={}", filmId, userId);
-            throw new ValidationException(String.format("Фильм id=%d не получал лайк от пользователя id=%d", filmId, userId));
-        }
-        filmStorage.getFilmById(filmId).revokeLike(userId);
+        checkExistenceOfFilmAndUser(filmId, userId);
+        getFilmById(filmId).getLikes().remove(userId);
         log.debug("Пользователь id={} удалил лайк для фильма id={}", userId, filmId);
     }
 
@@ -46,33 +74,17 @@ public class FilmService {
             log.debug("Размер списка фильмов указан меньше 1");
             throw new ValidationException("Размер списка не может быть меньше 1");
         }
-        if (filmStorage.getAllFilms().isEmpty()) {
-            log.debug("Список фильмов пуст");
-            throw new ValidationException("Список фильмов пуст");
-        }
-        List<Film> sorted = filmStorage.getAllFilms().stream()
-                            .sorted(Comparator.comparingInt(f -> f.getLikes().size()))
+        List<Film> sorted = getAllFilms().stream()
+                            .sorted((f1, f2) -> f2.getLikes().size() - f1.getLikes().size())
+                            .limit(count)
                             .collect(Collectors.toList());
-        Collections.reverse(sorted);
-        List<Film> limited = sorted.stream().limit(count).collect(Collectors.toList());
         log.debug("Получен список {} самых популярных фильмов", count);
-        return limited;
+        return sorted;
     }
 
-    private void validateFilmAndUserById(int filmId, int userId) {
-        try {
-            filmStorage.getFilmById(filmId);
-        } catch (NotFoundException e) {
-            log.debug("Фильм id={} не найден", filmId);
-            throw new NotFoundException(String.format("Фильм id=%d не найден", filmId));
-        }
-        try {
-            userStorage.getUserById(userId);
-        } catch (NotFoundException e) {
-            log.debug("Пользователь id={} не найден", userId);
-            throw new NotFoundException(String.format("Пользователь id=%d не найден", userId));
-        }
-
+    private void checkExistenceOfFilmAndUser(int filmId, int userId) {
+        getFilmById(filmId);
+        userService.getUserById(userId);
     }
 
 }

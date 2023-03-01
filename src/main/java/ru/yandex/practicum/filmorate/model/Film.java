@@ -15,12 +15,4 @@ public class Film {
     private final LocalDate releaseDate;
     private final Integer duration;
     private Set<Integer> likes = new HashSet<>();
-
-    public void addLike(Integer userId) {
-        likes.add(userId);
-    }
-
-    public void revokeLike(Integer userId) {
-        likes.remove(userId);
-    }
 }

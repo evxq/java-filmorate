@@ -22,7 +22,7 @@ public class ErrorHandler {
 
     @ExceptionHandler                                                               // 500
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-    public ErrorResponse handleException(final Throwable t) {
+    public ErrorResponse handleException(final Exception e) {
         return new ErrorResponse("Произошла непредвиденная ошибка");
     }
 
@@ -30,10 +30,6 @@ public class ErrorHandler {
         String error;
 
         public ErrorResponse(String error) {
-            this.error = error;
-        }
-
-        public void setError(String error) {
             this.error = error;
         }
 

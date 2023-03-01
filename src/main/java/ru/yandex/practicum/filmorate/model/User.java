@@ -15,12 +15,4 @@ public class User {
     private String name;
     private final LocalDate birthday;
     private Set<Integer> friends = new HashSet<>();
-
-    public void addFriend(Integer userId) {
-        friends.add(userId);
-    }
-
-    public void deleteFriend(Integer userId) {
-        friends.remove(userId);
-    }
 }
