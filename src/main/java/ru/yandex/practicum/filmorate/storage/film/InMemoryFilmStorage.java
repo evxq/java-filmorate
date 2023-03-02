@@ -10,6 +10,7 @@ import java.util.List;
 @Component
 public class InMemoryFilmStorage implements FilmStorage {
 
+    private int filmId;
     private HashMap<Integer, Film> filmMap = new HashMap<>();
 
     @Override
@@ -36,6 +37,16 @@ public class InMemoryFilmStorage implements FilmStorage {
             filmMap.put(film.getId(), film);
             return filmMap.get(film.getId());
         }
+    }
+
+    @Override
+    public int getFilmId() {
+        return filmId;
+    }
+
+    @Override
+    public void setFilmId(int id) {
+        this.filmId = id;
     }
 
 }

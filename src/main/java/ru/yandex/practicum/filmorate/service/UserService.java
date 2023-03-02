@@ -17,7 +17,6 @@ import java.util.Set;
 @RequiredArgsConstructor
 public class UserService {
 
-    private int userId;
     private final UserStorage userStorage;
 
     public User getUserById(Integer id) {
@@ -36,8 +35,9 @@ public class UserService {
     }
 
     public User createUser(User user) {
-        userId++;
-        user.setId(userId);
+        int newId = userStorage.getUserId() + 1;
+        userStorage.setUserId(newId);
+        user.setId(newId);
         if (user.getName() == null || user.getName().isBlank()) {
             user.setName(user.getLogin());
             log.debug("Имя присвоено как логин");

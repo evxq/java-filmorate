@@ -10,6 +10,7 @@ import java.util.List;
 @Component
 public class InMemoryUserStorage implements UserStorage {
 
+    private int userId;
     private HashMap<Integer, User> userMap = new HashMap<>();
 
     @Override
@@ -36,6 +37,16 @@ public class InMemoryUserStorage implements UserStorage {
             userMap.put(user.getId(), user);
             return userMap.get(user.getId());
         }
+    }
+
+    @Override
+    public int getUserId() {
+        return userId;
+    }
+
+    @Override
+    public void setUserId(int userId) {
+        this.userId = userId;
     }
 
 }

@@ -16,7 +16,6 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class FilmService {
 
-    private int filmId;
     private final FilmStorage filmStorage;
     private final UserService userService;
 
@@ -37,8 +36,9 @@ public class FilmService {
     }
 
     public Film addFilm(Film film) {
-        filmId++;
-        film.setId(filmId);
+        int newId = filmStorage.getFilmId() + 1;
+        filmStorage.setFilmId(newId);
+        film.setId(newId);
         filmStorage.addFilm(film);
         log.debug("Добавлен новый фильм {}, присвоен id={}", film.getName(), film.getId());
         return film;
