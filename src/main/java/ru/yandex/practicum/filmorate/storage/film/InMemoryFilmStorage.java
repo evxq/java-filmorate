@@ -25,7 +25,9 @@ public class InMemoryFilmStorage implements FilmStorage {
 
     @Override
     public Film addFilm(Film film) {
-        filmMap.put(film.getId(), film);
+        filmId++;
+        film.setId(filmId);
+        filmMap.put(filmId, film);
         return film;
     }
 
@@ -37,16 +39,6 @@ public class InMemoryFilmStorage implements FilmStorage {
             filmMap.put(film.getId(), film);
             return filmMap.get(film.getId());
         }
-    }
-
-    @Override
-    public int getFilmId() {
-        return filmId;
-    }
-
-    @Override
-    public void setFilmId(int id) {
-        this.filmId = id;
     }
 
 }

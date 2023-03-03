@@ -36,9 +36,6 @@ public class FilmService {
     }
 
     public Film addFilm(Film film) {
-        int newId = filmStorage.getFilmId() + 1;
-        filmStorage.setFilmId(newId);
-        film.setId(newId);
         filmStorage.addFilm(film);
         log.debug("Добавлен новый фильм {}, присвоен id={}", film.getName(), film.getId());
         return film;
@@ -55,7 +52,6 @@ public class FilmService {
             return updFilm;
         }
     }
-
 
     public void likeFilm(Integer filmId, Integer userId) {
         checkExistenceOfFilmAndUser(filmId, userId);

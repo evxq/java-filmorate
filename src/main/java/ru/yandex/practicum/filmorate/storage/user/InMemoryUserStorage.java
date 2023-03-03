@@ -25,7 +25,9 @@ public class InMemoryUserStorage implements UserStorage {
 
     @Override
     public User createUser(User user) {
-        userMap.put(user.getId(), user);
+        userId++;
+        user.setId(userId);
+        userMap.put(userId, user);
         return user;
     }
 
@@ -37,16 +39,6 @@ public class InMemoryUserStorage implements UserStorage {
             userMap.put(user.getId(), user);
             return userMap.get(user.getId());
         }
-    }
-
-    @Override
-    public int getUserId() {
-        return userId;
-    }
-
-    @Override
-    public void setUserId(int userId) {
-        this.userId = userId;
     }
 
 }
