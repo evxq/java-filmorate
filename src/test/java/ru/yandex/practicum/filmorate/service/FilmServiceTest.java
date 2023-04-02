@@ -8,8 +8,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
-import ru.yandex.practicum.filmorate.controller.FilmController;
-import ru.yandex.practicum.filmorate.controller.UserController;
 import ru.yandex.practicum.filmorate.dao.*;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
@@ -30,8 +28,7 @@ public class FilmServiceTest {
     private final JdbcTemplate jdbcTemplate;
     private final MpaDao mpaDao;
     private final FilmService filmService;
-    private final FilmController filmController;
-    private final UserController userController;
+    private final UserService userService;
 
     @BeforeEach
     void cleanDb() {
@@ -46,10 +43,10 @@ public class FilmServiceTest {
     void getFilmById_returnFilm() {
         Film film1 = new Film("Терминатор 1", "Шварцнеггер плохой", LocalDate.of(1984, Month.JANUARY, 1), 100);
         film1.setMpa(mpaDao.getMpaById(3));
-        filmController.addFilm(film1);
+        filmService.addFilm(film1);
         Film film2 = new Film("Терминатор 2", "Шварцнеггер хороший", LocalDate.of(1990, Month.JANUARY, 1), 100);
         film2.setMpa(mpaDao.getMpaById(3));
-        filmController.addFilm(film2);
+        filmService.addFilm(film2);
         Film filmById = filmService.getFilmById(film2.getId());
 
         Assertions.assertEquals(filmById, film2);
@@ -68,10 +65,10 @@ public class FilmServiceTest {
     void getAllFilms_returnListSize() {
         Film film1 = new Film("Терминатор 1", "Шварцнеггер плохой", LocalDate.of(1984, Month.JANUARY, 1), 100);
         film1.setMpa(mpaDao.getMpaById(3));
-        filmController.addFilm(film1);
+        filmService.addFilm(film1);
         Film film2 = new Film("Терминатор 2", "Шварцнеггер хороший", LocalDate.of(1990, Month.JANUARY, 1), 100);
         film2.setMpa(mpaDao.getMpaById(3));
-        filmController.addFilm(film2);
+        filmService.addFilm(film2);
 
         Assertions.assertEquals(2, filmService.getAllFilms().size());
     }
@@ -123,11 +120,11 @@ public class FilmServiceTest {
 
     @Test
     void likeFilm_returnAmountOfLike() {
-        User user1 = userController.createUser(new User("user1@ya.ru", "user1", LocalDate.of(2000, Month.JANUARY, 1)));
-        User user2 = userController.createUser(new User("user2@ya.ru", "user2", LocalDate.of(2000, Month.JANUARY, 2)));
+        User user1 = userService.createUser(new User("user1@ya.ru", "user1", LocalDate.of(2000, Month.JANUARY, 1)));
+        User user2 = userService.createUser(new User("user2@ya.ru", "user2", LocalDate.of(2000, Month.JANUARY, 2)));
         Film film = new Film("Терминатор 1", "Шварцнеггер плохой", LocalDate.of(1984, Month.JANUARY, 1), 100);
         film.setMpa(mpaDao.getMpaById(3));
-        filmController.addFilm(film);
+        filmService.addFilm(film);
         filmService.likeFilm(film.getId(), user1.getId());
         filmService.likeFilm(film.getId(), user2.getId());
 
@@ -136,35 +133,35 @@ public class FilmServiceTest {
 
     @Test
     void likeFilm_wrongFilmId() {
-        userController.createUser(new User("user1@ya.ru", "user1", LocalDate.of(2000, Month.JANUARY, 1)));
+        userService.createUser(new User("user1@ya.ru", "user1", LocalDate.of(2000, Month.JANUARY, 1)));
 
         NotFoundException nonFilm = assertThrows(
                 NotFoundException.class,
                 () -> filmService.likeFilm(1, 1)
         );
-        Assertions.assertEquals("Некорректный id фильмa", nonFilm.getMessage());
+        Assertions.assertEquals("Некорректный фильм или пользователь", nonFilm.getMessage());
     }
 
     @Test
     void likeFilm_wrongUserId() {
         Film film = new Film("Терминатор 1", "Шварцнеггер плохой", LocalDate.of(1984, Month.JANUARY, 1), 100);
         film.setMpa(mpaDao.getMpaById(3));
-        filmController.addFilm(film);
+        filmService.addFilm(film);
 
         NotFoundException nonUser = assertThrows(
                 NotFoundException.class,
                 () -> filmService.likeFilm(film.getId(), 50)
         );
-        Assertions.assertEquals("Некорректный пользователь", nonUser.getMessage());
+        Assertions.assertEquals("Некорректный фильм или пользователь", nonUser.getMessage());
     }
 
     @Test
     void revokeLikeToFilm_returnAmountOfLike() {
-        User user1 = userController.createUser(new User("user1@ya.ru", "user1", LocalDate.of(2000, Month.JANUARY, 1)));
-        User user2 = userController.createUser(new User("user2@ya.ru", "user2", LocalDate.of(2000, Month.JANUARY, 2)));
+        User user1 = userService.createUser(new User("user1@ya.ru", "user1", LocalDate.of(2000, Month.JANUARY, 1)));
+        User user2 = userService.createUser(new User("user2@ya.ru", "user2", LocalDate.of(2000, Month.JANUARY, 2)));
         Film film = new Film("Терминатор 1", "Шварцнеггер плохой", LocalDate.of(1984, Month.JANUARY, 1), 100);
         film.setMpa(mpaDao.getMpaById(3));
-        filmController.addFilm(film);
+        filmService.addFilm(film);
         filmService.likeFilm(film.getId(), user1.getId());
         filmService.likeFilm(film.getId(), user2.getId());
         filmService.revokeLikeToFilm(film.getId(), user1.getId());
@@ -175,21 +172,21 @@ public class FilmServiceTest {
 
     @Test
     void getTopPopFilms_returnListOfLikes() {
-        User user1 = userController.createUser(new User("user1@ya.ru", "user1", LocalDate.of(2000, Month.JANUARY, 1)));
-        User user2 = userController.createUser(new User("user2@ya.ru", "user2", LocalDate.of(2001, Month.JANUARY, 1)));
-        User user3 = userController.createUser(new User("user3@ya.ru", "user3", LocalDate.of(2002, Month.JANUARY, 1)));
+        User user1 = userService.createUser(new User("user1@ya.ru", "user1", LocalDate.of(2000, Month.JANUARY, 1)));
+        User user2 = userService.createUser(new User("user2@ya.ru", "user2", LocalDate.of(2001, Month.JANUARY, 1)));
+        User user3 = userService.createUser(new User("user3@ya.ru", "user3", LocalDate.of(2002, Month.JANUARY, 1)));
         Film film1 = new Film("Терминатор 1", "Шварцнеггер плохой", LocalDate.of(1984, Month.JANUARY, 1), 100);
         film1.setMpa(mpaDao.getMpaById(3));
-        filmController.addFilm(film1);
+        filmService.addFilm(film1);
         Film film2 = new Film("Терминатор 2", "Шварцнеггер хороший", LocalDate.of(1990, Month.JANUARY, 1), 100);
         film2.setMpa(mpaDao.getMpaById(3));
-        filmController.addFilm(film2);
+        filmService.addFilm(film2);
         Film film3 = new Film("Терминатор 3", "Шварцнеггер никакой", LocalDate.of(2003, Month.JANUARY, 1), 100);
         film3.setMpa(mpaDao.getMpaById(3));
-        filmController.addFilm(film3);
+        filmService.addFilm(film3);
         Film film4 = new Film("Терминатор 4", "Какой Шварцнеггер?", LocalDate.of(2009, Month.JANUARY, 1), 100);
         film4.setMpa(mpaDao.getMpaById(3));
-        filmController.addFilm(film4);
+        filmService.addFilm(film4);
         filmService.likeFilm(film1.getId(), user1.getId());
         filmService.likeFilm(film1.getId(), user2.getId());
         filmService.likeFilm(film1.getId(), user3.getId());     // 3 лайка фильму 1

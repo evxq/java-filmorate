@@ -36,7 +36,7 @@ CREATE TABLE IF NOT EXISTS film_genre (
 );
 
 CREATE TABLE IF NOT EXISTS film_likes (
-	film_id INTEGER NOT NULL, -- PRIMARY KEY NOT NULL,
+	film_id INTEGER NOT NULL,
 	user_id INTEGER,
 	CONSTRAINT film_likes_film_fk FOREIGN KEY (film_id) REFERENCES films (film_id),
 	CONSTRAINT film_likes_user_fk FOREIGN KEY (user_id) REFERENCES users (user_id)
@@ -55,7 +55,7 @@ CREATE TABLE IF NOT EXISTS mpa (
 );
 
 CREATE TABLE IF NOT EXISTS film_mpa (
-    film_id INTEGER PRIMARY KEY NOT NULL,
+    film_id INTEGER NOT NULL,
     mpa_id INTEGER,
     CONSTRAINT film_mpa_film_fk FOREIGN KEY (film_id) REFERENCES films (film_id),
     CONSTRAINT film_mpa_mpa_fk FOREIGN KEY (mpa_id) REFERENCES mpa (mpa_id)

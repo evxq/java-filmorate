@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.context.SpringBootTest;
-import ru.yandex.practicum.filmorate.controller.FilmController;
+import ru.yandex.practicum.filmorate.dao.FilmDbDao;
 import ru.yandex.practicum.filmorate.dao.FilmGenreDao;
 import ru.yandex.practicum.filmorate.dao.GenresDao;
 import ru.yandex.practicum.filmorate.dao.MpaDao;
@@ -25,10 +25,10 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 @RequiredArgsConstructor(onConstructor_ = @Autowired)
 public class FilmGenreDaoImplTest {
 
+    private final FilmDbDao filmDbDao;
     private final FilmGenreDao filmGenreDao;
     private final GenresDao genresDao;
     private final MpaDao mpaDao;
-    private final FilmController filmController;
     Film film;
 
     @BeforeEach
@@ -39,15 +39,15 @@ public class FilmGenreDaoImplTest {
 
     @Test
     void addGenresToFilm_returnGenresSize() {
-        filmController.addFilm(film);
+        filmDbDao.addFilm(film);
         filmGenreDao.addGenresToFilm(film.getId(), List.of(genresDao.getGenreById(1)));
 
-        Assertions.assertEquals(1, filmController.getFilmById(film.getId()).getGenres().size());
+        Assertions.assertEquals(1, filmDbDao.getFilmById(film.getId()).getGenres().size());
     }
 
     @Test
     void addGenresToFilm_wrongGenre() {
-        filmController.addFilm(film);
+        filmDbDao.addFilm(film);
 
         NotFoundException wrongGenre = assertThrows(
                 NotFoundException.class,
@@ -58,7 +58,7 @@ public class FilmGenreDaoImplTest {
 
     @Test
     void getFilmGenres_returnGenresSize() {
-        filmController.addFilm(film);
+        filmDbDao.addFilm(film);
         filmGenreDao.addGenresToFilm(film.getId(), List.of(genresDao.getGenreById(1)));
 
         Assertions.assertEquals(1, filmGenreDao.getFilmGenres(film.getId()).size());
@@ -66,7 +66,7 @@ public class FilmGenreDaoImplTest {
 
     @Test
     void getFilmGenres_noGenres() {
-        filmController.addFilm(film);
+        filmDbDao.addFilm(film);
 
         Assertions.assertEquals(0, filmGenreDao.getFilmGenres(film.getId()).size());
     }
@@ -74,10 +74,10 @@ public class FilmGenreDaoImplTest {
     @Test
     void deleteGenresForFilm_returnGenresSize() {
         film.setGenres(List.of(genresDao.getGenreById(1)));
-        filmController.addFilm(film);
+        filmDbDao.addFilm(film);
         filmGenreDao.deleteGenresForFilm(film.getId());
 
-        Assertions.assertEquals(0, filmController.getFilmById(film.getId()).getGenres().size());
+        Assertions.assertEquals(0, filmDbDao.getFilmById(film.getId()).getGenres().size());
     }
 
     @Test
@@ -85,10 +85,10 @@ public class FilmGenreDaoImplTest {
         film = new Film("Терминатор 1", "Шварцнеггер плохой", LocalDate.of(1984, Month.JANUARY, 1), 100);
         film.setMpa(mpaDao.getMpaById(1));
 
-        filmController.addFilm(film);
+        filmDbDao.addFilm(film);
         filmGenreDao.deleteGenresForFilm(film.getId());
 
-        Assertions.assertEquals(0, filmController.getFilmById(film.getId()).getGenres().size());
+        Assertions.assertEquals(0, filmDbDao.getFilmById(film.getId()).getGenres().size());
     }
 
 }

@@ -1,4 +1,4 @@
-package ru.yandex.practicum.filmorate.storage.user;
+package ru.yandex.practicum.filmorate.dao.impl;
 
 import lombok.RequiredArgsConstructor;
 import org.junit.jupiter.api.Assertions;
@@ -8,7 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
-import ru.yandex.practicum.filmorate.controller.UserController;
+import ru.yandex.practicum.filmorate.dao.UserDbDao;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.User;
 
@@ -20,11 +20,10 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 @SpringBootTest
 @AutoConfigureTestDatabase
 @RequiredArgsConstructor(onConstructor_ = @Autowired)
-public class UserDbStorageTest {
+public class UserDbDaoImplTest {
 
     private final JdbcTemplate jdbcTemplate;
-    private final UserStorage userStorage;
-    private final UserController userController;
+    private final UserDbDao userDbDao;
 
     @BeforeEach
     void cleanDb() {
@@ -35,16 +34,16 @@ public class UserDbStorageTest {
     @Test
     void getUserById_returnUser() {
         User user = new User("user1@ya.ru", "user1", LocalDate.of(2000, Month.JANUARY, 1));
-        userController.createUser(user);
+        userDbDao.createUser(user);
 
-        Assertions.assertEquals(user, userStorage.getUserById(user.getId()));
+        Assertions.assertEquals(user, userDbDao.getUserById(user.getId()));
     }
 
     @Test
     void getUserById_wrongUserId() {
         NotFoundException wrongUser = assertThrows(
                 NotFoundException.class,
-                () -> userStorage.getUserById(50)
+                () -> userDbDao.getUserById(50)
         );
         Assertions.assertEquals("Некорректный пользователь", wrongUser.getMessage());
     }
@@ -53,37 +52,37 @@ public class UserDbStorageTest {
     void getAllUsers_returnListSizeAndUsers() {
         User user1 = new User("user1@ya.ru", "user1", LocalDate.of(2000, Month.JANUARY, 1));
         User user2 = new User("user2@ya.ru", "user2", LocalDate.of(2001, Month.JANUARY, 1));
-        userController.createUser(user1);
-        userController.createUser(user2);
+        userDbDao.createUser(user1);
+        userDbDao.createUser(user2);
 
-        Assertions.assertEquals(2, userStorage.getAllUsers().size());
-        Assertions.assertEquals(user1, userStorage.getAllUsers().get(0));
-        Assertions.assertEquals(user2, userStorage.getAllUsers().get(1));
+        Assertions.assertEquals(2, userDbDao.getAllUsers().size());
+        Assertions.assertEquals(user1, userDbDao.getAllUsers().get(0));
+        Assertions.assertEquals(user2, userDbDao.getAllUsers().get(1));
     }
 
     @Test
     void getAllFilms_noFilms() {
-        Assertions.assertEquals(0, userStorage.getAllUsers().size());
+        Assertions.assertEquals(0, userDbDao.getAllUsers().size());
     }
 
     @Test
     void createUser_returnUser() {
         User user1 = new User("user1@ya.ru", "user1", LocalDate.of(2000, Month.JANUARY, 1));
-        userController.createUser(user1);
+        userDbDao.createUser(user1);
 
-        Assertions.assertEquals(user1, userStorage.getUserById(user1.getId()));
+        Assertions.assertEquals(user1, userDbDao.getUserById(user1.getId()));
     }
 
     @Test
     void updateUser_returnEqualUser() {
         User user1 = new User("user1@ya.ru", "user1", LocalDate.of(2000, Month.JANUARY, 1));
-        userController.createUser(user1);
+        userDbDao.createUser(user1);
 
         User userUpd = new User("userUpd@ya.ru", "userVasya", LocalDate.of(2000, Month.JANUARY, 10));
         userUpd.setId(user1.getId());
-        userStorage.updateUser(userUpd);
+        userDbDao.updateUser(userUpd);
 
-        Assertions.assertEquals(userUpd, userStorage.getUserById(userUpd.getId()));
+        Assertions.assertEquals(userUpd, userDbDao.getUserById(userUpd.getId()));
     }
 
 }

@@ -1,4 +1,4 @@
-package ru.yandex.practicum.filmorate.storage.user;
+package ru.yandex.practicum.filmorate.dao.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -9,6 +9,7 @@ import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.dao.FriendsDao;
+import ru.yandex.practicum.filmorate.dao.UserDbDao;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.User;
 
@@ -23,7 +24,7 @@ import java.util.List;
 @Primary
 @RequiredArgsConstructor
 @Slf4j
-public class UserDbStorage implements UserStorage {
+public class UserDbDaoImpl implements UserDbDao {
 
     private final JdbcTemplate jdbcTemplate;
     private final FriendsDao friendsDao;

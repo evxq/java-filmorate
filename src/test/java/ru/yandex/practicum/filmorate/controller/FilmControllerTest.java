@@ -195,7 +195,7 @@ public class FilmControllerTest {
                 NotFoundException.class,
                 () -> filmController.likeFilm(10, user.getId())
         );
-        Assertions.assertEquals("Некорректный id фильмa", nonFilm.getMessage());
+        Assertions.assertEquals("Некорректный фильм или пользователь", nonFilm.getMessage());
     }
 
     @Test
@@ -208,7 +208,7 @@ public class FilmControllerTest {
                 NotFoundException.class,
                 () -> filmController.likeFilm(film.getId(), 50)
         );
-        Assertions.assertEquals("Некорректный пользователь", nonUser.getMessage());
+        Assertions.assertEquals("Некорректный фильм или пользователь", nonUser.getMessage());
     }
 
     @Test

@@ -8,8 +8,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
-import ru.yandex.practicum.filmorate.controller.UserController;
 import ru.yandex.practicum.filmorate.dao.FriendsDao;
+import ru.yandex.practicum.filmorate.dao.UserDbDao;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.User;
 
@@ -26,7 +26,7 @@ public class FriendsDaoImplTest {
 
     private final JdbcTemplate jdbcTemplate;
     private final FriendsDao friendsDao;
-    private final UserController userController;
+    private final UserDbDao userDbDao;
     User user1;
     User user2;
     User user3;
@@ -35,16 +35,16 @@ public class FriendsDaoImplTest {
     void createUsers() {
         jdbcTemplate.update("DELETE FROM friends");
         jdbcTemplate.update("DELETE FROM users");
-        user1 = userController.createUser(new User("user1@ya.ru", "user1", LocalDate.of(2000, Month.JANUARY, 1)));
-        user2 = userController.createUser(new User("user2@ya.ru", "user2", LocalDate.of(2001, Month.JANUARY, 1)));
-        user3 = userController.createUser(new User("user3@ya.ru", "user3", LocalDate.of(2002, Month.JANUARY, 1)));
+        user1 = userDbDao.createUser(new User("user1@ya.ru", "user1", LocalDate.of(2000, Month.JANUARY, 1)));
+        user2 = userDbDao.createUser(new User("user2@ya.ru", "user2", LocalDate.of(2001, Month.JANUARY, 1)));
+        user3 = userDbDao.createUser(new User("user3@ya.ru", "user3", LocalDate.of(2002, Month.JANUARY, 1)));
     }
 
     @Test
     void addFriendSetToUser_returnSetSize() {
         friendsDao.addFriendSetToUser(user1.getId(), Set.of(user2.getId(), user3.getId()));
 
-        Assertions.assertEquals(2, userController.getUserFriendList(user1.getId()).size());
+        Assertions.assertEquals(2, friendsDao.getUserFriendList(user1.getId()).size());
     }
 
     @Test
@@ -60,17 +60,17 @@ public class FriendsDaoImplTest {
     void getUserFriendIdSet_returnSetSize() {
         friendsDao.addFriendSetToUser(user1.getId(), Set.of(user2.getId(), user3.getId()));
 
-        Assertions.assertEquals(2, userController.getUserFriendList(user1.getId()).size());
+        Assertions.assertEquals(2, friendsDao.getUserFriendList(user1.getId()).size());
     }
 
     @Test
     void getUserFriendIdSet_noFriends() {
-        Assertions.assertEquals(0, userController.getUserFriendList(user1.getId()).size());
+        Assertions.assertEquals(0, friendsDao.getUserFriendList(user1.getId()).size());
     }
 
     @Test
     void getUserFriendIdSet_wrongUserId() {
-        Assertions.assertEquals(0, userController.getUserFriendList(50).size());
+        Assertions.assertEquals(0, friendsDao.getUserFriendList(50).size());
     }
 
     @Test
@@ -78,9 +78,9 @@ public class FriendsDaoImplTest {
         friendsDao.addToFriends(user1.getId(), user2.getId());
         friendsDao.addToFriends(user1.getId(), user3.getId());
 
-        Assertions.assertEquals(2, userController.getUserFriendList(user1.getId()).size());
-        Assertions.assertEquals(user2.getId(), userController.getUserFriendList(user1.getId()).get(0).getId());
-        Assertions.assertEquals(user3.getId(), userController.getUserFriendList(user1.getId()).get(1).getId());
+        Assertions.assertEquals(2, friendsDao.getUserFriendList(user1.getId()).size());
+        Assertions.assertEquals(user2.getId(), friendsDao.getUserFriendList(user1.getId()).get(0).getId());
+        Assertions.assertEquals(user3.getId(), friendsDao.getUserFriendList(user1.getId()).get(1).getId());
     }
 
     @Test
@@ -104,8 +104,8 @@ public class FriendsDaoImplTest {
         friendsDao.addToFriends(user1.getId(), user3.getId());
         friendsDao.deleteFromFriends(user1.getId(), user2.getId());
 
-        Assertions.assertEquals(1, userController.getUserFriendList(user1.getId()).size());
-        Assertions.assertEquals(user3.getId(), userController.getUserFriendList(user1.getId()).get(0).getId());
+        Assertions.assertEquals(1, friendsDao.getUserFriendList(user1.getId()).size());
+        Assertions.assertEquals(user3.getId(), friendsDao.getUserFriendList(user1.getId()).get(0).getId());
     }
 
     @Test

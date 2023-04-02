@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.context.SpringBootTest;
-import ru.yandex.practicum.filmorate.controller.FilmController;
+import ru.yandex.practicum.filmorate.dao.FilmDbDao;
 import ru.yandex.practicum.filmorate.dao.FilmMpaDao;
 import ru.yandex.practicum.filmorate.dao.MpaDao;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
@@ -25,26 +25,26 @@ public class FilmMpaDaoImplTest {
 
     private final FilmMpaDao filmMpaDao;
     private final MpaDao mpaDao;
-    private final FilmController filmController;
+    private final FilmDbDao filmDbDao;
     Film film;
 
     @BeforeEach
     void createFilm() {
         film = new Film("Терминатор 1", "Шварцнеггер плохой", LocalDate.of(1984, Month.JANUARY, 1), 100);
         film.setMpa(mpaDao.getMpaById(2));
-        filmController.addFilm(film);
+        filmDbDao.addFilm(film);
     }
 
     @Test
     void updateMpaToFilm_returnMpaId() {
         filmMpaDao.updateMpaToFilm(film.getId(), 3);
 
-        Assertions.assertEquals(3, filmController.getFilmById(film.getId()).getMpa().getId());
+        Assertions.assertEquals(3, filmDbDao.getFilmById(film.getId()).getMpa().getId());
     }
 
     @Test
     void addMpaToFilm_returnMpaId() {
-        Assertions.assertEquals(2, filmController.getFilmById(film.getId()).getMpa().getId());
+        Assertions.assertEquals(2, filmDbDao.getFilmById(film.getId()).getMpa().getId());
     }
 
     @Test

@@ -8,7 +8,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
-import ru.yandex.practicum.filmorate.controller.UserController;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
@@ -26,7 +25,6 @@ public class UserServiceTest {
 
     private final JdbcTemplate jdbcTemplate;
     private final UserService userService;
-    private final UserController userController;
 
     @BeforeEach
     void cleanDb() {
@@ -36,7 +34,7 @@ public class UserServiceTest {
 
     @Test
     void getUserById_returnUser() {
-        User user = userController.createUser(new User("user1@ya.ru", "user1", LocalDate.of(2000, Month.JANUARY, 1)));
+        User user = userService.createUser(new User("user1@ya.ru", "user1", LocalDate.of(2000, Month.JANUARY, 1)));
 
         Assertions.assertEquals(user, userService.getUserById(user.getId()));
     }
@@ -52,8 +50,8 @@ public class UserServiceTest {
 
     @Test
     void getAllUsers_returnAllUserListSize() {
-        userController.createUser(new User("user1@ya.ru", "user1", LocalDate.of(2000, Month.JANUARY, 1)));
-        userController.createUser(new User("user2@ya.ru", "user2", LocalDate.of(2000, Month.JANUARY, 2)));
+        userService.createUser(new User("user1@ya.ru", "user1", LocalDate.of(2000, Month.JANUARY, 1)));
+        userService.createUser(new User("user2@ya.ru", "user2", LocalDate.of(2000, Month.JANUARY, 2)));
 
         Assertions.assertEquals(2, userService.getAllUsers().size());
     }
@@ -79,7 +77,7 @@ public class UserServiceTest {
 
     @Test
     void updateUser_returnUpdatedUser() {
-        User user = userController.createUser(new User("user1@ya.ru", "user1", LocalDate.of(2000, Month.JANUARY, 1)));
+        User user = userService.createUser(new User("user1@ya.ru", "user1", LocalDate.of(2000, Month.JANUARY, 1)));
         User updUser = new User("userupd@ya.ru", "userUPD", LocalDate.of(2000, Month.JANUARY, 10));
         updUser.setId(user.getId());
         userService.updateUser(updUser);
@@ -98,9 +96,9 @@ public class UserServiceTest {
 
     @Test
     void addToFriends_returnFriendListSize() {
-        User user1 = userController.createUser(new User("user1@ya.ru", "user1", LocalDate.of(2000, Month.JANUARY, 1)));
-        User user2 = userController.createUser(new User("user2@ya.ru", "user2", LocalDate.of(2001, Month.JANUARY, 1)));
-        User user3 = userController.createUser(new User("user3@ya.ru", "user3", LocalDate.of(2002, Month.JANUARY, 1)));
+        User user1 = userService.createUser(new User("user1@ya.ru", "user1", LocalDate.of(2000, Month.JANUARY, 1)));
+        User user2 = userService.createUser(new User("user2@ya.ru", "user2", LocalDate.of(2001, Month.JANUARY, 1)));
+        User user3 = userService.createUser(new User("user3@ya.ru", "user3", LocalDate.of(2002, Month.JANUARY, 1)));
         userService.addToFriends(user1.getId(), user2.getId());
         userService.addToFriends(user1.getId(), user3.getId());
 
@@ -120,9 +118,9 @@ public class UserServiceTest {
 
     @Test
     void deleteFromFriends_returnFriendListSize() {
-        User user1 = userController.createUser(new User("user1@ya.ru", "user1", LocalDate.of(2000, Month.JANUARY, 1)));
-        User user2 = userController.createUser(new User("user2@ya.ru", "user2", LocalDate.of(2001, Month.JANUARY, 1)));
-        User user3 = userController.createUser(new User("user3@ya.ru", "user3", LocalDate.of(2002, Month.JANUARY, 1)));
+        User user1 = userService.createUser(new User("user1@ya.ru", "user1", LocalDate.of(2000, Month.JANUARY, 1)));
+        User user2 = userService.createUser(new User("user2@ya.ru", "user2", LocalDate.of(2001, Month.JANUARY, 1)));
+        User user3 = userService.createUser(new User("user3@ya.ru", "user3", LocalDate.of(2002, Month.JANUARY, 1)));
         userService.addToFriends(user1.getId(), user2.getId());
         userService.addToFriends(user1.getId(), user3.getId());
         userService.deleteFromFriends(user1.getId(), user2.getId());
@@ -132,9 +130,9 @@ public class UserServiceTest {
 
     @Test
     void getUserFriends_returnUserFriendsListSize() {
-        User user1 = userController.createUser(new User("user1@ya.ru", "user1", LocalDate.of(2000, Month.JANUARY, 1)));
-        User user2 = userController.createUser(new User("user2@ya.ru", "user2", LocalDate.of(2001, Month.JANUARY, 1)));
-        User user3 = userController.createUser(new User("user3@ya.ru", "user3", LocalDate.of(2002, Month.JANUARY, 1)));
+        User user1 = userService.createUser(new User("user1@ya.ru", "user1", LocalDate.of(2000, Month.JANUARY, 1)));
+        User user2 = userService.createUser(new User("user2@ya.ru", "user2", LocalDate.of(2001, Month.JANUARY, 1)));
+        User user3 = userService.createUser(new User("user3@ya.ru", "user3", LocalDate.of(2002, Month.JANUARY, 1)));
         userService.addToFriends(user1.getId(), user2.getId());
         userService.addToFriends(user1.getId(), user3.getId());
 
@@ -145,10 +143,10 @@ public class UserServiceTest {
 
     @Test
     void getCommonFriends_returnCommonFriendsListSize() {
-        User user1 = userController.createUser(new User("user1@ya.ru", "user1", LocalDate.of(2000, Month.JANUARY, 1)));
-        User user2 = userController.createUser(new User("user2@ya.ru", "user2", LocalDate.of(2001, Month.JANUARY, 1)));
-        User user3 = userController.createUser(new User("user3@ya.ru", "user3", LocalDate.of(2002, Month.JANUARY, 1)));
-        User user4 = userController.createUser(new User("user4@ya.ru", "user4", LocalDate.of(2003, Month.JANUARY, 1)));
+        User user1 = userService.createUser(new User("user1@ya.ru", "user1", LocalDate.of(2000, Month.JANUARY, 1)));
+        User user2 = userService.createUser(new User("user2@ya.ru", "user2", LocalDate.of(2001, Month.JANUARY, 1)));
+        User user3 = userService.createUser(new User("user3@ya.ru", "user3", LocalDate.of(2002, Month.JANUARY, 1)));
+        User user4 = userService.createUser(new User("user4@ya.ru", "user4", LocalDate.of(2003, Month.JANUARY, 1)));
         userService.addToFriends(user1.getId(), user2.getId());
         userService.addToFriends(user1.getId(), user3.getId());
         userService.addToFriends(user4.getId(), user2.getId());

@@ -13,7 +13,6 @@ import ru.yandex.practicum.filmorate.model.User;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
@@ -75,20 +74,21 @@ public class FriendsDaoImpl implements FriendsDao {
 
     @Override
     public List<User> getUserFriendList(Integer userId) {
-        String sqlQuery = "SELECT * FROM users WHERE user_id IN " +
-                "(SELECT friend_id FROM friends WHERE user_id = ?)";
+        String sqlQuery = "SELECT u.user_id, u.email, u.login, u.name, u.birthday FROM friends f " +
+                "JOIN users u ON f.friend_id = u.user_id WHERE f.user_id = ?";
+
         return jdbcTemplate.query(sqlQuery, this::makeUser, userId);
     }
 
     @Override
     public List<User> getCommonFriends(Integer userId, Integer otherUserId) {
-        List<User> common = new ArrayList<>();
-        for (User user : getUserFriendList(userId)) {
-            if (getUserFriendList(otherUserId).contains(user)) {
-                common.add(user);
-            }
-        }
-        return common;
+        String sqlQuery = "SELECT u.user_id, u.email, u.login, u.name, u.birthday FROM friends f " +
+                "JOIN users u ON f.friend_id = u.user_id WHERE f.user_id = ?" +
+                " INTERSECT " +
+                "SELECT u.user_id, u.email, u.login, u.name, u.birthday FROM friends f " +
+                "JOIN users u ON f.friend_id = u.user_id WHERE f.user_id = ?";
+
+        return jdbcTemplate.query(sqlQuery, this::makeUser, userId, otherUserId);
     }
 
     private User makeUser(ResultSet rs, int rowNum) throws SQLException {

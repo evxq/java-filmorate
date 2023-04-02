@@ -8,15 +8,19 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
-import ru.yandex.practicum.filmorate.controller.FilmController;
-import ru.yandex.practicum.filmorate.controller.UserController;
+import ru.yandex.practicum.filmorate.dao.FilmDbDao;
 import ru.yandex.practicum.filmorate.dao.FilmLikesDao;
 import ru.yandex.practicum.filmorate.dao.MpaDao;
+import ru.yandex.practicum.filmorate.dao.UserDbDao;
+import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
 
 import java.time.LocalDate;
 import java.time.Month;
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 
 @SpringBootTest
@@ -25,10 +29,10 @@ import java.time.Month;
 public class FilmLikesDaoImplTest {
 
     private final JdbcTemplate jdbcTemplate;
+    private final FilmDbDao filmDbDao;
+    private final UserDbDao userDbDao;
     private final FilmLikesDao filmLikesDao;
     private final MpaDao mpaDao;
-    private final FilmController filmController;
-    private final UserController userController;
     Film film;
     User user;
 
@@ -40,15 +44,30 @@ public class FilmLikesDaoImplTest {
         jdbcTemplate.update("DELETE FROM films");
         film = new Film("Терминатор 1", "Шварцнеггер плохой", LocalDate.of(1984, Month.JANUARY, 1), 100);
         film.setMpa(mpaDao.getMpaById(1));
-        filmController.addFilm(film);
-        user = userController.createUser(new User("user1@ya.ru", "user1", LocalDate.of(2000, Month.JANUARY, 1)));
+        filmDbDao.addFilm(film);
+        user = userDbDao.createUser(new User("user1@ya.ru", "user1", LocalDate.of(2000, Month.JANUARY, 1)));
     }
 
     @Test
     void likeFilm_returnLikesSize() {
         filmLikesDao.likeFilm(film.getId(), user.getId());
 
-        Assertions.assertEquals(1, filmController.getFilmById(film.getId()).getLikes().size());
+        Assertions.assertEquals(1, filmDbDao.getFilmById(film.getId()).getLikes().size());
+    }
+
+    @Test
+    void likeFilm_wrongFilmAndUser() {
+        NotFoundException wrongUser = assertThrows(
+                NotFoundException.class,
+                () -> filmLikesDao.likeFilm(film.getId(), 100)
+        );
+        Assertions.assertEquals("Некорректный фильм или пользователь", wrongUser.getMessage());
+
+        NotFoundException wrongFilm = assertThrows(
+                NotFoundException.class,
+                () -> filmLikesDao.likeFilm(100, user.getId())
+        );
+        Assertions.assertEquals("Некорректный фильм или пользователь", wrongFilm.getMessage());
     }
 
     @Test
@@ -68,7 +87,22 @@ public class FilmLikesDaoImplTest {
         filmLikesDao.likeFilm(film.getId(), user.getId());
         filmLikesDao.revokeLikeToFilm(film.getId(), user.getId());
 
-        Assertions.assertEquals(0, filmController.getFilmById(film.getId()).getLikes().size());
+        Assertions.assertEquals(0, filmDbDao.getFilmById(film.getId()).getLikes().size());
+    }
+
+    @Test
+    void revokeLikeToFilm_wrongFilmAndUser() {
+        NotFoundException wrongUser = assertThrows(
+                NotFoundException.class,
+                () -> filmLikesDao.likeFilm(film.getId(), 100)
+        );
+        Assertions.assertEquals("Некорректный фильм или пользователь", wrongUser.getMessage());
+
+        NotFoundException wrongFilm = assertThrows(
+                NotFoundException.class,
+                () -> filmLikesDao.likeFilm(100, user.getId())
+        );
+        Assertions.assertEquals("Некорректный фильм или пользователь", wrongFilm.getMessage());
     }
 
 }

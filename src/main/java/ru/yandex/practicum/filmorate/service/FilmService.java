@@ -7,7 +7,7 @@ import ru.yandex.practicum.filmorate.dao.FilmLikesDao;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
+import ru.yandex.practicum.filmorate.dao.FilmDbDao;
 
 import java.util.*;
 
@@ -17,7 +17,7 @@ import java.util.*;
 public class FilmService {
 
     private final FilmLikesDao filmLikesDao;
-    private final FilmStorage filmStorage;
+    private final FilmDbDao filmStorage;
     private final UserService userService;
 
     public Film getFilmById(Integer id) {
@@ -60,13 +60,11 @@ public class FilmService {
     }
 
     public void likeFilm(Integer filmId, Integer userId) {
-        checkExistenceOfFilmAndUser(filmId, userId);
         filmLikesDao.likeFilm(filmId, userId);
         log.debug("Фильм id = {} получил лайк от пользователя id = {}", filmId, userId);
     }
 
     public void revokeLikeToFilm(Integer filmId, Integer userId) {
-        checkExistenceOfFilmAndUser(filmId, userId);
         filmLikesDao.revokeLikeToFilm(filmId, userId);
         log.debug("Пользователь id = {} удалил лайк для фильма id = {}", userId, filmId);
     }
@@ -79,11 +77,6 @@ public class FilmService {
         log.debug("Вызван список {} самых популярных фильмов", count);
 
         return filmStorage.getTopPopFilms(count);
-    }
-
-    private void checkExistenceOfFilmAndUser(int filmId, int userId) {
-        getFilmById(filmId);
-        userService.getUserById(userId);
     }
 
 }

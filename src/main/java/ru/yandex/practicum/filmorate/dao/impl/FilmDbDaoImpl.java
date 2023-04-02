@@ -1,4 +1,4 @@
-package ru.yandex.practicum.filmorate.storage.film;
+package ru.yandex.practicum.filmorate.dao.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -9,6 +9,7 @@ import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.dao.*;
+import ru.yandex.practicum.filmorate.dao.FilmDbDao;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
@@ -24,7 +25,7 @@ import java.util.List;
 @Primary
 @RequiredArgsConstructor
 @Slf4j
-public class FilmDbStorage implements FilmStorage {
+public class FilmDbDaoImpl implements FilmDbDao {
 
     private final JdbcTemplate jdbcTemplate;
     private final FilmLikesDao filmLikesDao;

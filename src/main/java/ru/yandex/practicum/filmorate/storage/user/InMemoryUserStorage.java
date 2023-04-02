@@ -1,6 +1,7 @@
 package ru.yandex.practicum.filmorate.storage.user;
 
 import org.springframework.stereotype.Component;
+import ru.yandex.practicum.filmorate.dao.UserDbDao;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
 
@@ -10,7 +11,7 @@ import java.util.List;
 import java.util.Set;
 
 @Component
-public class InMemoryUserStorage implements UserStorage {
+public class InMemoryUserStorage implements UserDbDao {
 
     private int userId;
     private HashMap<Integer, User> userMap = new HashMap<>();

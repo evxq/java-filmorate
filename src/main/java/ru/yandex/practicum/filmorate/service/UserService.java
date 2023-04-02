@@ -7,7 +7,7 @@ import ru.yandex.practicum.filmorate.dao.FriendsDao;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
-import ru.yandex.practicum.filmorate.storage.user.UserStorage;
+import ru.yandex.practicum.filmorate.dao.UserDbDao;
 
 import java.util.List;
 
@@ -17,7 +17,7 @@ import java.util.List;
 public class UserService {
 
     private final FriendsDao friendsDao;
-    private final UserStorage userStorage;
+    private final UserDbDao userStorage;
 
     public User getUserById(Integer id) {
         User user = userStorage.getUserById(id);
