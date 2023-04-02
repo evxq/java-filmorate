@@ -3,6 +3,7 @@ package ru.yandex.practicum.filmorate.controller;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
+import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.service.FilmService;
@@ -38,16 +39,21 @@ public class FilmController {
 
     @GetMapping("/{id}")                                             // получить фильм по id
     public Film getFilmById(@PathVariable Integer id) {
+        validateId(id);
         return filmService.getFilmById(id);
     }
 
     @PutMapping("/{id}/like/{userId}")                               // пользователь ставит лайк фильму
     public void likeFilm(@PathVariable Integer id, @PathVariable Integer userId) {
+        validateId(id);
+        validateId(userId);
         filmService.likeFilm(id, userId);
     }
 
     @DeleteMapping("/{id}/like/{userId}")                            // пользователь удаляет лайк
     public void revokeLikeToFilm(@PathVariable Integer id, @PathVariable Integer userId) {
+        validateId(id);
+        validateId(userId);
         filmService.revokeLikeToFilm(id, userId);
     }
 
@@ -82,6 +88,14 @@ public class FilmController {
             errorMessage = "Продолжительность фильма указана некорректна";
             log.debug(errorMessage);
             throw new ValidationException(errorMessage);
+        }
+    }
+
+    private void validateId(Integer id) {
+        if (id < 0) {
+            String errorMessage = "Передан некорректный id";
+            log.debug(errorMessage);
+            throw new NotFoundException(errorMessage);
         }
     }
 
