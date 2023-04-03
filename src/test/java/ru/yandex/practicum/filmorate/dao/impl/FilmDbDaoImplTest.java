@@ -8,16 +8,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
-import ru.yandex.practicum.filmorate.dao.FilmLikesDao;
-import ru.yandex.practicum.filmorate.dao.MpaDao;
-import ru.yandex.practicum.filmorate.dao.FilmDbDao;
-import ru.yandex.practicum.filmorate.dao.UserDbDao;
+import ru.yandex.practicum.filmorate.dao.*;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
 
 import java.time.LocalDate;
 import java.time.Month;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -30,6 +28,7 @@ public class FilmDbDaoImplTest {
     private final FilmDbDao filmDbDao;
     private final UserDbDao userDbDao;
     private final MpaDao mpaDao;
+    private final GenresDao genresDao;
     private final FilmLikesDao filmLikesDao;
 
     @BeforeEach
@@ -44,6 +43,7 @@ public class FilmDbDaoImplTest {
     void getFilmById_returnFilm() {
         Film film1 = new Film("Терминатор 1", "Шварцнеггер плохой", LocalDate.of(1984, Month.JANUARY, 1), 100);
         film1.setMpa(mpaDao.getMpaById(3));
+        film1.setGenres(List.of(genresDao.getGenreById(1), genresDao.getGenreById(6), genresDao.getGenreById(3)));
         filmDbDao.addFilm(film1);
 
         Assertions.assertEquals(film1, filmDbDao.getFilmById(film1.getId()));
@@ -63,7 +63,9 @@ public class FilmDbDaoImplTest {
         Film film1 = new Film("Терминатор 1", "Шварцнеггер плохой", LocalDate.of(1984, Month.JANUARY, 1), 100);
         Film film2 = new Film("Терминатор 2", "Шварцнеггер хороший", LocalDate.of(1990, Month.JANUARY, 1), 100);
         film1.setMpa(mpaDao.getMpaById(3));
+        film1.setGenres(List.of(genresDao.getGenreById(1), genresDao.getGenreById(6)));
         film2.setMpa(mpaDao.getMpaById(3));
+        film2.setGenres(List.of(genresDao.getGenreById(2), genresDao.getGenreById(5)));
         filmDbDao.addFilm(film1);
         filmDbDao.addFilm(film2);
 

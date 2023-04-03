@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Primary;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Component;
@@ -13,13 +14,14 @@ import ru.yandex.practicum.filmorate.dao.FilmDbDao;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
+import ru.yandex.practicum.filmorate.model.Mpa;
 
 import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
+import java.time.LocalDate;
+import java.util.*;
 
 @Component
 @Primary
@@ -28,19 +30,33 @@ import java.util.List;
 public class FilmDbDaoImpl implements FilmDbDao {
 
     private final JdbcTemplate jdbcTemplate;
-    private final FilmLikesDao filmLikesDao;
     private final FilmGenreDao filmGenreDao;
     private final MpaDao mpaDao;
     private final GenresDao genresDao;
     private final FilmMpaDao filmMpaDao;
 
+    private static final String SELECT_FILM_WITH_ALL_DATA =
+            "SELECT f.film_id, f.name, f.description, f.releaseDate, f.duration, " +
+                    "fm.mpa_id, mpa.name mpa_name, " +
+                    "fg.genre_id, g.name genre_name, " +
+                    "fl.user_id " +
+                    "FROM films f " +
+                    "LEFT JOIN film_mpa fm ON f.film_id = fm.film_id " +
+                    "LEFT JOIN mpa ON fm.mpa_id  = mpa.mpa_id " +
+                    "LEFT JOIN film_genre fg ON f.film_id = fg.film_id " +
+                    "LEFT JOIN genres g ON fg.genre_id = g.genre_id " +
+                    "LEFT JOIN film_likes fl ON f.film_id = fl.film_id ";
+
     @Override
     public Film getFilmById(Integer filmId) {
-        String sqlQuery = "SELECT * FROM films WHERE film_id = ?";
         Film film;
         try {
-            film = jdbcTemplate.queryForObject(sqlQuery, this::makeFilm, filmId);
-        } catch (DataAccessException e) {
+            film = jdbcTemplate.query(SELECT_FILM_WITH_ALL_DATA + "WHERE f.film_id = ?", this::extractFilm, filmId);
+            if (film == null) {
+                log.warn("Вызван некорректный id фильмa id = {}", filmId);
+                throw new NotFoundException("Некорректный id фильмa");
+            }
+        } catch (DataAccessException | NullPointerException e) {
             log.warn("Вызван некорректный id фильмa id = {}", filmId);
             throw new NotFoundException("Некорректный id фильмa");
         }
@@ -49,39 +65,63 @@ public class FilmDbDaoImpl implements FilmDbDao {
 
     @Override
     public List<Film> getAllFilms() {
-        String sqlQuery = "SELECT * FROM films";
-        log.debug("Из БД вызван список всех фильмов");
-        return jdbcTemplate.query(sqlQuery, this::makeFilm);
+        List<Film> filmList;
+        try {
+            filmList = jdbcTemplate.query(SELECT_FILM_WITH_ALL_DATA, extractAllFilms);
+            log.debug("Из БД вызван список всех фильмов");
+        } catch (DataAccessException | NullPointerException e) {
+            log.warn("Ошибка при вызове списка всех фильмов");
+            throw new NotFoundException("Ошибка при вызове списка всех фильмов");
+        }
+        return filmList;
     }
 
     @Override
     public List<Film> getTopPopFilms(Integer count) {
-        String sqlQuery = "SELECT * FROM films WHERE film_id IN" +
-                "(SELECT film_id FROM film_likes GROUP BY film_id ORDER BY COUNT(user_id) DESC LIMIT ?)";
-        List<Film> topList = jdbcTemplate.query(sqlQuery, this::makeFilm, count);
+        String sqlQuery = SELECT_FILM_WITH_ALL_DATA + "WHERE f.film_id IN" +
+                "(SELECT fl.film_id FROM film_likes GROUP BY fl.film_id ORDER BY COUNT(fl.user_id) DESC LIMIT ?)";
+        List<Film> topList = jdbcTemplate.query(sqlQuery, extractAllFilms, count);
         if (topList.isEmpty()) {
-            String sqlQueryAll = "SELECT * FROM films LIMIT ?";
-            topList = jdbcTemplate.query(sqlQueryAll, this::makeFilm, count);
+            String sqlQueryAll = SELECT_FILM_WITH_ALL_DATA + "LIMIT ?";
+            topList = jdbcTemplate.query(sqlQueryAll, extractAllFilms, count);
         }
-
         return topList;
     }
 
-    private Film makeFilm(ResultSet rs, int rowNum) throws SQLException {
-        Integer filmId = rs.getInt("film_id");
-        Film film = new Film(
-                rs.getString("name"),
-                rs.getString("description"),
-                rs.getDate("releaseDate").toLocalDate(),
-                rs.getInt("duration"));
-        film.setId(filmId);
-        film.setMpa(filmMpaDao.getFilmMpa(filmId));                         // вызвали рейтинг фильма и присвоили объекту фильма
-        film.getLikes().addAll(filmLikesDao.getFilmLikes(filmId));          // вызвали список лайков и присвоили объекту фильма
-        film.getGenres().addAll(filmGenreDao.getFilmGenres(filmId));        // вызвали список жанров и присвоили объекту фильма
-        log.debug("Из БД вызван фильм id = {}", filmId);
+    private final Map<Integer, Film> filmMap = new HashMap<>();
 
+    private Film extractFilm(ResultSet rs) throws SQLException {
+        filmMap.clear();
+        Film film = null;
+        while (rs.next()) {
+            Integer filmId = rs.getInt("film_id");
+            film = filmMap.get(filmId);
+            if (film == null) {
+                String name = rs.getString("name");
+                String description = rs.getString("description");
+                LocalDate releaseDate = rs.getDate("releaseDate").toLocalDate();
+                Integer duration = rs.getInt("duration");
+                film = new Film(name, description, releaseDate, duration);
+                film.setId(rs.getInt("film_id"));
+                film.setMpa(new Mpa(rs.getInt("mpa_id"), rs.getString("mpa_name")));
+                filmMap.put(filmId, film);
+            }
+            int genreId = rs.getInt("genre_id");
+            if (genreId != 0) {
+                film.getGenres().add(new Genre(genreId, rs.getString("genre_name")));
+            }
+            int userId = rs.getInt("user_id");
+            if (userId != 0) {
+                film.getLikes().add(userId);
+            }
+        }
         return film;
     }
+
+    private final ResultSetExtractor<List<Film>> extractAllFilms = rs -> {
+        extractFilm(rs);
+        return new ArrayList<>(filmMap.values());
+    };
 
     @Override
     public Film addFilm(Film film) {
