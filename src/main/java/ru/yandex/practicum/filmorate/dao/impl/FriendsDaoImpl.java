@@ -1,5 +1,6 @@
 package ru.yandex.practicum.filmorate.dao.impl;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Primary;
 import org.springframework.dao.DataAccessException;
@@ -19,14 +20,11 @@ import java.util.Set;
 
 @Component
 @Primary
+@RequiredArgsConstructor
 @Slf4j
 public class FriendsDaoImpl implements FriendsDao {
 
     private final JdbcTemplate jdbcTemplate;
-
-    public FriendsDaoImpl(JdbcTemplate jdbcTemplate) {
-        this.jdbcTemplate = jdbcTemplate;
-    }
 
     @Override
     public void addFriendSetToUser(Integer userId, Set<Integer> friends) {

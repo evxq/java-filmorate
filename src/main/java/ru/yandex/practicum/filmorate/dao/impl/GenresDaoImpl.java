@@ -1,5 +1,6 @@
 package ru.yandex.practicum.filmorate.dao.impl;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Primary;
 import org.springframework.dao.DataAccessException;
@@ -15,14 +16,11 @@ import java.util.List;
 
 @Component
 @Primary
+@RequiredArgsConstructor
 @Slf4j
 public class GenresDaoImpl implements GenresDao {
 
     private final JdbcTemplate jdbcTemplate;
-
-    public GenresDaoImpl(JdbcTemplate jdbcTemplate) {
-        this.jdbcTemplate = jdbcTemplate;
-    }
 
     @Override
     public Genre getGenreById(Integer genreId) {

@@ -1,5 +1,6 @@
 package ru.yandex.practicum.filmorate.dao.impl;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Primary;
 import org.springframework.dao.DataAccessException;
@@ -14,14 +15,11 @@ import java.util.Collection;
 
 @Component
 @Primary
+@RequiredArgsConstructor
 @Slf4j
 public class FilmLikesDaoImpl implements FilmLikesDao {
 
     private final JdbcTemplate jdbcTemplate;
-
-    public FilmLikesDaoImpl(JdbcTemplate jdbcTemplate) {
-        this.jdbcTemplate = jdbcTemplate;
-    }
 
     @Override
     public Collection<Integer> getFilmLikes(Integer filmId) {

@@ -33,7 +33,6 @@ public class FilmDbDaoImplTest {
 
     @BeforeEach
     void cleanDb() {
-        jdbcTemplate.update("DELETE FROM film_mpa");
         jdbcTemplate.update("DELETE FROM film_likes");
         jdbcTemplate.update("DELETE FROM film_genre");
         jdbcTemplate.update("DELETE FROM films");

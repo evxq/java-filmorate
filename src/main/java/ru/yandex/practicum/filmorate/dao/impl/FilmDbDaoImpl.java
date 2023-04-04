@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Primary;
 import org.springframework.dao.DataAccessException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
@@ -33,16 +34,14 @@ public class FilmDbDaoImpl implements FilmDbDao {
     private final FilmGenreDao filmGenreDao;
     private final MpaDao mpaDao;
     private final GenresDao genresDao;
-    private final FilmMpaDao filmMpaDao;
 
     private static final String SELECT_FILM_WITH_ALL_DATA =
             "SELECT f.film_id, f.name, f.description, f.releaseDate, f.duration, " +
-                    "fm.mpa_id, mpa.name mpa_name, " +
+                    "f.mpa_id, mpa.name mpa_name, " +
                     "fg.genre_id, g.name genre_name, " +
                     "fl.user_id " +
                     "FROM films f " +
-                    "LEFT JOIN film_mpa fm ON f.film_id = fm.film_id " +
-                    "LEFT JOIN mpa ON fm.mpa_id  = mpa.mpa_id " +
+                    "LEFT JOIN mpa ON f.mpa_id  = mpa.mpa_id " +
                     "LEFT JOIN film_genre fg ON f.film_id = fg.film_id " +
                     "LEFT JOIN genres g ON fg.genre_id = g.genre_id " +
                     "LEFT JOIN film_likes fl ON f.film_id = fl.film_id ";
@@ -88,14 +87,24 @@ public class FilmDbDaoImpl implements FilmDbDao {
         return topList;
     }
 
-    private final Map<Integer, Film> filmMap = new HashMap<>();
-
     private Film extractFilm(ResultSet rs) throws SQLException {
-        filmMap.clear();
+        Map<Integer, Film> filmMap = new HashMap<>();
+
+        return makeFilm(filmMap, rs);
+    }
+
+    private final ResultSetExtractor<List<Film>> extractAllFilms = rs -> {
+        Map<Integer, Film> filmMap = new HashMap<>();
+        makeFilm(filmMap, rs);
+
+        return new ArrayList<>(filmMap.values());
+    };
+
+    private Film makeFilm(Map<Integer, Film> map, ResultSet rs) throws SQLException {
         Film film = null;
         while (rs.next()) {
             Integer filmId = rs.getInt("film_id");
-            film = filmMap.get(filmId);
+            film = map.get(filmId);
             if (film == null) {
                 String name = rs.getString("name");
                 String description = rs.getString("description");
@@ -104,7 +113,7 @@ public class FilmDbDaoImpl implements FilmDbDao {
                 film = new Film(name, description, releaseDate, duration);
                 film.setId(rs.getInt("film_id"));
                 film.setMpa(new Mpa(rs.getInt("mpa_id"), rs.getString("mpa_name")));
-                filmMap.put(filmId, film);
+                map.put(filmId, film);
             }
             int genreId = rs.getInt("genre_id");
             if (genreId != 0) {
@@ -117,11 +126,6 @@ public class FilmDbDaoImpl implements FilmDbDao {
         }
         return film;
     }
-
-    private final ResultSetExtractor<List<Film>> extractAllFilms = rs -> {
-        extractFilm(rs);
-        return new ArrayList<>(filmMap.values());
-    };
 
     @Override
     public Film addFilm(Film film) {
@@ -140,7 +144,7 @@ public class FilmDbDaoImpl implements FilmDbDao {
         Integer filmId = keyHolder.getKey().intValue();
         film.setId(filmId);
         film.setMpa(mpaDao.getMpaById(film.getMpa().getId()));             // присвоили объекту фильма объект mpa
-        filmMpaDao.addMpaToFilm(filmId, film.getMpa().getId());            // Добавили mpa фильма в БД film_mpa
+        updateMpaToFilm(filmId, film.getMpa().getId());                    // Добавили mpa фильма в БД film_mpa
         filmGenreDao.addGenresToFilm(filmId, film.getGenres());            // Добавили список жанров фильма в БД
         log.debug("В БД добавлен фильм id = {}", filmId);
 
@@ -164,7 +168,7 @@ public class FilmDbDaoImpl implements FilmDbDao {
             throw new NotFoundException("Некорректные данные фильма");
         }
         film.setMpa(mpaDao.getMpaById(film.getMpa().getId()));              // присвоили объекту фильма объект mpa
-        filmMpaDao.updateMpaToFilm(filmId, film.getMpa().getId());          // Добавили mpa фильма в БД film_mpa
+        updateMpaToFilm(filmId, film.getMpa().getId());                     // Добавили mpa фильма в БД film_mpa
         List<Genre> genresList = new ArrayList<>();
         List<Integer> idList = new ArrayList<>();
         for (Genre genre : film.getGenres()) {
@@ -179,6 +183,16 @@ public class FilmDbDaoImpl implements FilmDbDao {
         log.debug("В БД обновлен фильм id = {}", filmId);
 
         return film;
+    }
+
+    private void updateMpaToFilm(Integer filmId, Integer mpaId) {
+        String sqlQuery = "UPDATE films SET mpa_id = ? WHERE film_id = ?";
+        try {
+            jdbcTemplate.update(sqlQuery, mpaId, filmId);
+            log.debug("Фильму id = {} присвоен рейтинг id = {}", filmId, mpaId);
+        } catch (DataIntegrityViolationException e) {
+            throw new NotFoundException("Некорректный id рейтинга");
+        }
     }
 
 }
