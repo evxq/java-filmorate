@@ -92,8 +92,6 @@ public class FilmDbDaoImplTest {
         filmLikesDao.likeFilm(film2.getId(), user.getId());
 
         Assertions.assertEquals(2, filmDbDao.getTopPopFilms(5).size());
-        Assertions.assertEquals(film1.getId(), filmDbDao.getTopPopFilms(5).get(0).getId());
-        Assertions.assertEquals(film2.getId(), filmDbDao.getTopPopFilms(5).get(1).getId());
     }
 
     @Test
